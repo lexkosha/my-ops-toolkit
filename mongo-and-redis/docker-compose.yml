@@ -1,29 +1,40 @@
-version: '3.8'
-
 services:
+  # MongoDB Database Service
   mongodb:
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb_container
     restart: always
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
-    # Optional: environment variables for auth
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - app_network
 
+  # Redis Cache Service
   redis:
-    image: redis:latest
-    container_name: redis
+    image: redis:7-alpine
+    container_name: redis_container
     restart: always
     ports:
       - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - app_network
 
+# Persistent Storage Volumes
 volumes:
   mongo_data:
+    driver: local
   redis_data:
+    driver: local
+
+# Isolated Network for Security
+networks:
+  app_network:
+    driver: bridge
